@@ -1,0 +1,123 @@
+
+<h2 class="sr-only">Zoomed heart rate chart for Aidan Mugford, 6pm to 7pm on May 6, 2026. Shows readings starting around 94–99 bpm at 6:06, spiking rapidly to 141 at 6:15, then descending and settling near 78–95 bpm by 6:45–6:54.</h2>
+
+<div style="padding: 1rem 0;">
+  <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; font-size: 12px; color: var(--color-text-secondary);">
+    <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #e24b4a;"></span>Peak: 141 bpm at 6:15</span>
+    <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #378add;"></span>Heart rate (bpm)</span>
+  </div>
+  <div style="position: relative; width: 100%; height: 360px;">
+    <canvas id="hrZoom" role="img" aria-label="Zoomed heart rate 6pm to 7pm on May 6. Starting ~94 bpm, rapid rise to 141 by 6:15pm, descent back to 78-95 by 6:45-6:54pm.">Readings: 6:06 ~94–99, 6:10 ~109–112, 6:14 ~130–134, 6:15 ~136–141, 6:18 114, 6:21–6:23 ~110–136, 6:24 ~102, 6:45 90, 6:49 95, 6:54 78.</canvas>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const raw = [
+  {m:6,  y:99},{m:6,  y:99},{m:6,  y:99},{m:6,  y:99},{m:6,  y:98},{m:6,  y:94},
+  {m:10, y:109},{m:10, y:112},
+  {m:14, y:130},{m:14, y:132},{m:14, y:134},
+  {m:15, y:136},{m:15, y:139},{m:15, y:141},{m:15, y:141},{m:15, y:141},
+  {m:15, y:141},{m:15, y:141},{m:15, y:140},{m:15, y:139},{m:15, y:137},
+  {m:18, y:114},
+  {m:21, y:135},{m:21, y:136},
+  {m:22, y:121},{m:22, y:121},
+  {m:23, y:119},{m:23, y:115},{m:23, y:111},{m:23, y:112},{m:23, y:113},
+  {m:23, y:116},{m:23, y:115},{m:23, y:120},{m:23, y:110},
+  {m:24, y:102},{m:24, y:103},
+  {m:45, y:90},
+  {m:49, y:95},
+  {m:54, y:78}
+];
+
+const pts = raw.map(d => ({x: d.m, y: d.y}));
+
+const peakPlugin = {
+  id: 'peakLabel',
+  afterDatasetsDraw(chart) {
+    const {ctx, scales: {x, y}} = chart;
+    const px = x.getPixelForValue(15);
+    const py = y.getPixelForValue(141);
+    ctx.save();
+    ctx.fillStyle = '#e24b4a';
+    ctx.font = '500 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('141 bpm', px, py - 10);
+    ctx.restore();
+  }
+};
+
+new Chart(document.getElementById('hrZoom'), {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      label: 'BPM',
+      data: pts,
+      borderColor: '#378add',
+      backgroundColor: ctx => {
+        const v = ctx.raw?.y;
+        if (v >= 140) return '#e24b4a';
+        if (v >= 120) return '#ef9f27';
+        return 'rgba(55,138,221,0.7)';
+      },
+      pointRadius: 4.5,
+      pointHoverRadius: 6,
+      showLine: true,
+      borderWidth: 1.5,
+      tension: 0.2
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: ctx => {
+            const m = ctx[0].parsed.x;
+            return '6:' + String(m).padStart(2,'0') + ' pm';
+          },
+          label: ctx => ctx.parsed.y + ' bpm'
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'linear',
+        min: 0,
+        max: 60,
+        ticks: {
+          stepSize: 5,
+          font: { size: 11 },
+          color: '#888780',
+          callback: v => {
+            if (v === 0) return '6:00';
+            if (v === 60) return '7:00';
+            return '6:' + String(v).padStart(2,'0');
+          }
+        },
+        title: {
+          display: true,
+          text: 'Time (6pm – 7pm)',
+          font: { size: 12 },
+          color: '#888780'
+        },
+        grid: { color: 'rgba(136,135,128,0.15)' }
+      },
+      y: {
+        min: 60,
+        max: 155,
+        ticks: {
+          stepSize: 10,
+          font: { size: 11 },
+          color: '#888780',
+          callback: v => v + ' bpm'
+        },
+        grid: { color: 'rgba(136,135,128,0.15)' }
+      }
+    }
+  },
+  plugins: [peakPlugin]
+});
+</script>

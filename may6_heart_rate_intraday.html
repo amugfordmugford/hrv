@@ -1,0 +1,131 @@
+
+<h2 class="sr-only">Aidan Mugford's heart rate readings on May 6, 2026, plotted by time of day from 8:36am to 7:29pm. The 6–7pm window is highlighted and shows a dense cluster of elevated readings around 18:14–18:23.</h2>
+
+<div style="padding: 1rem 0;">
+  <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; font-size: 12px; color: var(--color-text-secondary);">
+    <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #378add;"></span>Heart rate (bpm)</span>
+    <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: rgba(239,159,39,0.25); border: 1px solid #ef9f27;"></span>6–7 pm highlighted</span>
+  </div>
+  <div style="position: relative; width: 100%; height: 360px;">
+    <canvas id="hrDay" role="img" aria-label="Scatter plot of heart rate readings on May 6, ranging from 67 to 161 bpm. Notable peak of 161 at 11:14am and a dense cluster around 6pm reaching 141 bpm.">Heart rate on May 6 ranged from 67 to 161 bpm across ~100 readings from 8:36am to 7:29pm.</canvas>
+  </div>
+  <div style="margin-top: 12px; padding: 10px 14px; background: var(--color-background-warning); border-radius: var(--border-radius-md); font-size: 13px; color: var(--color-text-warning);">
+    <strong>6–7 pm:</strong> Dense cluster of rapid readings — multiple per minute around 18:14–18:23, peaking at 141 bpm. This pattern (many readings seconds apart) may indicate an ECG or manual check event.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const pts = [
+  {x:8.60,y:120},{x:8.68,y:133},{x:8.93,y:102},{x:9.00,y:110},{x:9.37,y:108},
+  {x:9.80,y:104},{x:9.98,y:116},{x:10.32,y:120},{x:10.33,y:108},{x:10.62,y:98},
+  {x:11.03,y:125},{x:11.08,y:137},{x:11.13,y:156},{x:11.18,y:142},{x:11.23,y:161},
+  {x:11.30,y:140},{x:11.33,y:131},{x:11.38,y:139},{x:11.55,y:70},{x:11.68,y:125},
+  {x:11.73,y:116},{x:11.78,y:143},{x:11.82,y:148},{x:12.05,y:149},
+  {x:12.92,y:97},{x:13.00,y:80},{x:13.30,y:126},{x:13.33,y:88},{x:13.63,y:118},
+  {x:13.88,y:129},{x:13.95,y:136},{x:13.98,y:110},{x:14.47,y:136},{x:14.50,y:117},
+  {x:14.65,y:110},{x:14.70,y:129},{x:14.73,y:152},{x:14.95,y:160},{x:15.00,y:127},
+  {x:15.07,y:96},{x:15.27,y:67},{x:15.38,y:85},{x:15.48,y:83},
+  {x:16.62,y:131},{x:16.82,y:119},{x:16.90,y:110},{x:16.98,y:88},
+  {x:17.33,y:95},{x:17.38,y:107},{x:17.53,y:129},{x:17.58,y:74},{x:17.65,y:121},
+  {x:18.10,y:99},{x:18.10,y:99},{x:18.10,y:99},{x:18.10,y:99},{x:18.10,y:98},{x:18.10,y:94},
+  {x:18.17,y:109},{x:18.17,y:112},
+  {x:18.23,y:130},{x:18.23,y:132},{x:18.23,y:134},
+  {x:18.25,y:136},{x:18.25,y:139},{x:18.25,y:141},{x:18.25,y:141},{x:18.25,y:141},
+  {x:18.25,y:141},{x:18.25,y:141},{x:18.25,y:140},{x:18.25,y:139},{x:18.25,y:137},
+  {x:18.30,y:114},
+  {x:18.35,y:135},{x:18.35,y:136},
+  {x:18.37,y:121},{x:18.37,y:121},
+  {x:18.38,y:119},{x:18.38,y:115},{x:18.38,y:111},{x:18.38,y:112},{x:18.38,y:113},
+  {x:18.38,y:116},{x:18.38,y:115},{x:18.38,y:120},{x:18.38,y:110},
+  {x:18.40,y:102},{x:18.40,y:103},
+  {x:18.75,y:90},{x:18.82,y:95},{x:18.90,y:78},
+  {x:19.08,y:95},{x:19.28,y:85},{x:19.43,y:85},{x:19.48,y:94}
+];
+
+function fmtHour(h) {
+  const hr = Math.floor(h);
+  const mn = Math.round((h - hr) * 60);
+  const ampm = hr >= 12 ? 'pm' : 'am';
+  const disp = hr > 12 ? hr - 12 : hr;
+  return disp + ':' + String(mn).padStart(2,'0') + ampm;
+}
+
+const highlightBand = {
+  id: 'highlightBand',
+  beforeDraw(chart) {
+    const {ctx, chartArea: {top, bottom}, scales: {x}} = chart;
+    const x1 = x.getPixelForValue(18);
+    const x2 = x.getPixelForValue(19);
+    ctx.save();
+    ctx.fillStyle = 'rgba(239,159,39,0.12)';
+    ctx.fillRect(x1, top, x2 - x1, bottom - top);
+    ctx.strokeStyle = 'rgba(239,159,39,0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(x1, top); ctx.lineTo(x1, bottom); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2, top); ctx.lineTo(x2, bottom); ctx.stroke();
+    ctx.restore();
+  }
+};
+
+new Chart(document.getElementById('hrDay'), {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      label: 'BPM',
+      data: pts,
+      borderColor: '#378add',
+      backgroundColor: 'rgba(55,138,221,0.55)',
+      pointRadius: 3.5,
+      pointHoverRadius: 5,
+      showLine: true,
+      borderWidth: 1,
+      tension: 0.15
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: ctx => fmtHour(ctx[0].parsed.x),
+          label: ctx => ctx.parsed.y + ' bpm'
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'linear',
+        min: 8,
+        max: 20,
+        ticks: {
+          stepSize: 1,
+          font: { size: 11 },
+          color: '#888780',
+          callback: v => {
+            if (v > 12) return (v - 12) + 'pm';
+            if (v === 12) return '12pm';
+            return v + 'am';
+          }
+        },
+        grid: { color: 'rgba(136,135,128,0.15)' }
+      },
+      y: {
+        min: 55,
+        max: 175,
+        ticks: {
+          stepSize: 20,
+          font: { size: 11 },
+          color: '#888780',
+          callback: v => v + ' bpm'
+        },
+        grid: { color: 'rgba(136,135,128,0.15)' }
+      }
+    }
+  },
+  plugins: [highlightBand]
+});
+</script>
