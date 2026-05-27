@@ -1,0 +1,217 @@
+
+<h2 class="sr-only">Combined heart rate chart for Aidan Mugford, May 6–25, across 11 days with clinical flags.</h2>
+
+<div style="padding: 1rem 0 0.5rem;">
+  <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem;" id="legend"></div>
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem;" id="metricCards"></div>
+  <div style="margin-bottom: 1rem;">
+    <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px;">Quick filters:</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 7px;" id="dayFilters"></div>
+  </div>
+  <div style="position: relative; width: 100%; height: 360px;">
+    <canvas id="hrChart" role="img" aria-label="Combined heart rate readings for Aidan Mugford across 11 days in May. Peak 177 bpm on May 25. Dense burst recording clusters on May 6 and May 9.">Heart rate data May 6–25, peak 177 bpm.</canvas>
+  </div>
+  <div style="margin-top: 1.5rem; border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1rem 1.25rem; background: var(--color-background-primary);">
+    <div style="font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 10px;"><i class="ti ti-alert-circle" aria-hidden="true" style="font-size:15px;vertical-align:-2px;margin-right:5px;color:#E24B4A;"></i>Clinical flags — all days</div>
+    <div id="flagsList" style="display:flex;flex-direction:column;gap:5px;"></div>
+  </div>
+  <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--color-text-secondary);align-items:center;">
+    <span><span style="display:inline-block;width:24px;height:2px;border-top:2px dashed #BA7517;vertical-align:middle;margin-right:4px;"></span>Elevated (100 bpm)</span>
+    <span><span style="display:inline-block;width:24px;height:2px;background:#E24B4A;vertical-align:middle;margin-right:4px;"></span>High (150 bpm)</span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const rawData = {
+  "May 6":  [
+    [8*60+36,120],[8*60+41,133],[8*60+56,102],[9*60+0,110],[9*60+22,108],[9*60+48,104],[9*60+59,116],[10*60+19,120],[10*60+20,108],[10*60+37,98],
+    [11*60+2,125],[11*60+5,137],[11*60+8,156],[11*60+11,142],[11*60+14,161],[11*60+18,140],[11*60+20,131],[11*60+23,139],[11*60+33,70],[11*60+41,125],[11*60+44,116],[11*60+47,143],[11*60+49,148],
+    [12*60+3,149],[12*60+55,97],[13*60+0,80],[13*60+18,126],[13*60+20,88],[13*60+38,118],[13*60+53,129],[13*60+57,136],[13*60+59,110],
+    [14*60+28,136],[14*60+30,117],[14*60+39,110],[14*60+42,129],[14*60+44,152],[14*60+57,160],
+    [15*60+0,127],[15*60+4,96],[15*60+16,67],[15*60+23,85],[15*60+29,83],
+    [16*60+37,131],[16*60+49,119],[16*60+54,110],[16*60+59,88],
+    [17*60+20,95],[17*60+23,107],[17*60+32,129],[17*60+35,74],[17*60+39,121],
+    [18*60+6,99],[18*60+10,112],[18*60+14,134],[18*60+15,141],[18*60+18,114],[18*60+21,136],[18*60+22,121],[18*60+23,118],[18*60+24,102],[18*60+36,100],[18*60+38,100],[18*60+40,100],[18*60+43,100],[18*60+45,90],[18*60+49,95],[18*60+54,78],
+    [19*60+5,95],[19*60+17,85],[19*60+26,85],[19*60+29,94]
+  ],
+  "May 8":  [
+    [7*60+26,82],[7*60+27,88],[7*60+39,124],[8*60+4,129],[8*60+6,75],[8*60+10,88],[8*60+15,92],[8*60+23,144],[8*60+38,112],[8*60+42,109],
+    [9*60+8,92],[9*60+13,92],[9*60+20,106],[9*60+32,101],[9*60+37,104],[10*60+0,105],[10*60+3,93],[10*60+9,104],[10*60+12,105],
+    [10*60+36,88],[11*60+4,121],[11*60+8,84],[11*60+9,83],[11*60+21,106],[12*60+1,122],[12*60+7,117],[12*60+17,93],[12*60+19,110],[12*60+25,95],[12*60+37,118],[12*60+41,107],[12*60+46,117],
+    [14*60+7,72],[16*60+5,109],[16*60+45,124],[17*60+3,125],[17*60+45,79],[18*60+29,93],[18*60+40,88],[18*60+56,67],[18*60+59,80],[19*60+30,88]
+  ],
+  "May 9":  [
+    [15*60+2,97],[15*60+3,112],[15*60+3,106],[15*60+3,106],[15*60+3,107],[15*60+3,107],[15*60+3,108],[15*60+3,112],[15*60+3,106],[15*60+3,99],[15*60+4,104],[15*60+4,104],[15*60+4,107],[15*60+4,102],[15*60+4,108],[15*60+4,108],[15*60+4,109],[15*60+5,108],[15*60+5,109],[15*60+5,116],[15*60+6,105],[15*60+7,104],
+    [15*60+8,120],[15*60+11,124],[15*60+13,124],[15*60+16,126],[15*60+18,123],[15*60+19,124],[15*60+27,80],[15*60+41,99],[15*60+42,93],[15*60+47,96],[15*60+51,113],[16*60+0,138],
+    [16*60+18,149],[16*60+38,99],[16*60+39,99],[16*60+44,95],[16*60+49,86],[16*60+52,91],[16*60+58,95],[17*60+5,103],[17*60+13,94],[17*60+21,92],[17*60+23,88],[17*60+28,93],[17*60+57,92],
+    [18*60+2,94],[18*60+5,148],[18*60+10,137],[18*60+15,138],[18*60+19,154],[18*60+23,154],[18*60+25,161],[18*60+29,149],[18*60+36,103],[18*60+38,100],[18*60+45,94],[18*60+49,100]
+  ],
+  "May 11": [
+    [8*60+6,78],[8*60+8,88],[8*60+11,82],[8*60+16,130],[8*60+25,91],[8*60+27,92],[8*60+36,83],[8*60+39,97],[8*60+56,100],[8*60+58,93],
+    [9*60+4,98],[9*60+16,111],[9*60+20,72],[9*60+28,88],[9*60+33,87],[9*60+41,91],[9*60+44,89],[9*60+51,92],[9*60+53,74],[10*60+9,115],[10*60+20,66],
+    [11*60+51,74],[11*60+55,82],[12*60+1,95],[12*60+5,74],[12*60+11,72],[12*60+16,70],[12*60+21,61],[12*60+23,71],[12*60+28,80],[12*60+32,64],[12*60+41,73],[12*60+43,78],[12*60+49,82],[12*60+52,83],[13*60+1,85],[13*60+2,90],[13*60+8,86],[13*60+13,86],[13*60+17,83],[13*60+25,83],[13*60+28,85],[13*60+36,94],[13*60+37,86],[13*60+45,78],[13*60+51,95],[13*60+52,92],[13*60+57,71],
+    [14*60+23,86],[14*60+28,78],[14*60+30,141],[14*60+43,95],[14*60+53,88],[15*60+6,84],[15*60+8,78],[15*60+28,108],[15*60+36,92],[15*60+41,116],[16*60+57,121],[17*60+2,133],[17*60+9,130],[17*60+11,88],[17*60+15,125],[17*60+24,125],[17*60+29,81],[17*60+35,147],[17*60+39,85],[17*60+44,77],[17*60+51,87],[17*60+56,86],[17*60+57,85],
+    [18*60+4,93],[18*60+24,71],[18*60+32,144],[18*60+35,140],[18*60+43,123],[18*60+49,105],[18*60+52,86],
+    [19*60+3,92],[19*60+7,122],[19*60+17,99],[19*60+36,71],[19*60+41,78]
+  ],
+  "May 12": [
+    [7*60+47,90],[8*60+5,91],[8*60+21,84],[8*60+23,90],[8*60+31,97],[8*60+33,86],[8*60+39,92],[8*60+42,131],[8*60+43,71],[8*60+47,83],[8*60+54,86],[8*60+57,83],
+    [9*60+3,97],[9*60+7,85],[9*60+31,78],[9*60+33,95],[9*60+40,88],[9*60+43,87],[9*60+49,87],[9*60+53,84],[9*60+57,101],[10*60+4,89],[10*60+9,90],[10*60+19,104],[10*60+24,94],[10*60+29,78],[10*60+36,115],[10*60+39,83],[10*60+42,83],[10*60+54,83],
+    [11*60+10,73],[11*60+22,85],[11*60+34,83],[11*60+40,78],[11*60+47,85],[11*60+50,141],[11*60+53,134],[11*60+59,80],[12*60+2,80],[12*60+6,139],[12*60+10,133],[12*60+15,153],[12*60+19,134],[12*60+26,87],[12*60+36,89],[12*60+39,86],[12*60+44,87],[12*60+51,92],[12*60+52,89],
+    [13*60+4,104],[13*60+5,86],[13*60+24,76],[13*60+27,95],[13*60+28,76],[13*60+35,89],[13*60+37,80],[13*60+44,81],[13*60+53,78],[14*60+1,80],[14*60+15,76],[14*60+17,71],[14*60+37,83],[14*60+43,148],[14*60+59,124],
+    [16*60+8,103],[17*60+17,106],[17*60+29,139]
+  ],
+  "May 13": [
+    [8*60+8,86],[8*60+20,80],[8*60+24,80],[8*60+43,82],[8*60+55,112],
+    [9*60+4,102],[9*60+6,93],[9*60+8,95],[9*60+12,89],[9*60+18,94],[9*60+24,95],[9*60+29,98],[9*60+34,99],[9*60+39,96],[9*60+53,67],[9*60+53,126],
+    [10*60+6,86],[10*60+11,90],[10*60+14,94],[10*60+34,84],[10*60+41,93],[10*60+42,91],[10*60+47,82],[10*60+54,102],[10*60+55,88],
+    [11*60+1,89],[11*60+3,87],[11*60+7,86],[11*60+13,80],[11*60+22,85],[11*60+29,85],[11*60+50,99],[11*60+54,99],[11*60+58,88],
+    [12*60+11,86],[12*60+13,83],[12*60+26,94],[12*60+36,86],[12*60+40,80],[12*60+42,82],[12*60+47,84],[13*60+35,82],
+    [13*60+40,87],[13*60+45,79],[13*60+58,75],[14*60+11,98],[14*60+27,84],[15*60+0,125],[15*60+7,131],[15*60+15,115],[15*60+18,140],[15*60+22,132],[15*60+29,132],[17*60+1,126],[17*60+21,157],
+    [17*60+33,128],[17*60+36,114],[17*60+51,76],[18*60+6,86],[18*60+13,96],[18*60+21,89],[18*60+25,153],[18*60+36,152],[18*60+39,151],[18*60+43,159],[18*60+46,151],[18*60+51,84]
+  ],
+  "May 15": [
+    [7*60+58,83],[8*60+2,76],[8*60+14,93],[8*60+32,94],[8*60+46,91],[8*60+48,85],
+    [9*60+8,83],[9*60+21,82],[9*60+51,87],[9*60+58,74],[10*60+2,79],[10*60+12,78],[10*60+21,76],[10*60+35,79],[10*60+37,96],[10*60+55,79],
+    [11*60+34,75],[11*60+40,71],[11*60+43,67],[11*60+51,81],[11*60+54,90],[11*60+57,92],[12*60+20,131],[12*60+50,109],[12*60+59,92],
+    [13*60+3,86],[13*60+16,84],[13*60+31,124],[13*60+38,79],[13*60+44,80],[13*60+47,76],[14*60+3,83],[14*60+21,88],[14*60+23,84],[14*60+27,79],[14*60+45,76],[14*60+47,72],
+    [15*60+1,76],[15*60+4,78],[15*60+16,75],[15*60+18,75],[15*60+23,74],[16*60+55,99],[17*60+33,126],[17*60+35,79],[17*60+40,73],[17*60+43,80],[17*60+48,70],[17*60+57,87]
+  ],
+  "May 19": [
+    [7*60+26,70],[7*60+27,73],[8*60+0,72],[8*60+5,73],[8*60+9,71],[8*60+12,74],[8*60+19,72],[8*60+23,70],[8*60+27,95],[8*60+35,71],[8*60+37,79],[8*60+45,79],[8*60+48,78],[8*60+56,76],
+    [9*60+0,82],[9*60+5,86],[9*60+11,89],[9*60+14,93],[9*60+20,94],[9*60+22,111],[9*60+29,77],[9*60+33,84],[9*60+40,87],[9*60+43,78],
+    [10*60+0,84],[10*60+3,80],[10*60+10,89],[10*60+19,95],[10*60+31,85],[10*60+34,81],[10*60+40,79],[10*60+46,82],[10*60+50,81],[11*60+1,81],[11*60+6,81],[11*60+21,83],[11*60+26,77],[11*60+31,76],[11*60+34,72],[11*60+40,77],[11*60+44,69],[11*60+53,78],
+    [12*60+5,80],[12*60+8,72],[12*60+33,68],[12*60+46,79],[13*60+26,76],[13*60+28,79],[13*60+36,82],[13*60+38,83],[13*60+43,106],[13*60+49,111],
+    [14*60+39,130],[14*60+43,65],[14*60+52,73],[15*60+1,72],[15*60+6,72],[15*60+13,75],[15*60+26,72],[15*60+28,71],[15*60+35,108],[15*60+37,112],[15*60+44,72],[15*60+47,101],[15*60+50,81],
+    [16*60+3,104],[16*60+7,103],[16*60+15,127],[16*60+27,136],[16*60+36,87],[16*60+51,86],[17*60+5,77],[17*60+31,79],[17*60+38,132],[17*60+48,136],[17*60+51,133],[18*60+9,88],[18*60+21,71]
+  ],
+  "May 20": [
+    [7*60+34,97],[8*60+20,80],[8*60+24,148],[8*60+31,97],[8*60+39,141],[8*60+41,152],[8*60+58,131],[9*60+0,136],[9*60+3,119],[9*60+9,124],[9*60+12,122],[9*60+20,151],[9*60+25,153],[9*60+40,157],[9*60+43,154],[9*60+52,162],[9*60+55,142],[9*60+58,155],[10*60+1,128],[16*60+0,84]
+  ],
+  "May 21": [
+    [7*60+56,115],[7*60+58,85],[8*60+3,76],[8*60+9,84],[8*60+18,81],[8*60+21,130],[8*60+33,137],[8*60+36,118],[8*60+45,89],[8*60+55,116],[8*60+58,124],
+    [9*60+3,93],[9*60+14,93],[9*60+20,94],[9*60+22,111],[9*60+48,95],[10*60+32,110],[10*60+35,126],[10*60+45,159],
+    [11*60+18,139],[11*60+20,142],[11*60+24,135],[11*60+28,154],[11*60+30,150],[11*60+35,136],[11*60+42,140],[11*60+46,165],[11*60+56,120],[11*60+59,107],[12*60+3,128],[12*60+7,153],[12*60+10,165],[12*60+21,129],[12*60+25,132],[12*60+31,121],[12*60+44,131],
+    [13*60+4,114],[16*60+2,101],[20*60+12,112],[20*60+30,101],[20*60+32,98],[20*60+45,101]
+  ],
+  "May 25": [
+    [8*60+1,83],[8*60+5,85],[8*60+7,88],[8*60+14,90],[8*60+26,136],[8*60+30,124],[8*60+37,128],[8*60+39,159],[8*60+59,125],
+    [9*60+23,120],[9*60+30,105],[9*60+35,88],[9*60+37,107],[9*60+45,98],[9*60+48,99],[9*60+56,114],[10*60+0,113],[10*60+15,144],[10*60+18,177],[10*60+20,123],[10*60+23,130],[10*60+26,136],[10*60+28,130],[10*60+31,133],[10*60+33,144],[10*60+35,147],[10*60+38,138],[10*60+40,137],[10*60+42,133],[10*60+45,140],[10*60+51,137],[10*60+54,131],[10*60+57,136],[10*60+59,128],[11*60+3,133],[11*60+5,134],[11*60+8,138],[11*60+10,130],[11*60+15,143],[11*60+17,153],[11*60+21,142],[11*60+27,116],[11*60+41,148],[11*60+43,122],[11*60+47,124],[11*60+51,136],
+    [13*60+13,86],[15*60+15,80],[15*60+20,71],[15*60+39,95],[15*60+54,95],[16*60+43,102],[16*60+47,97],[16*60+58,97],[17*60+28,84],[17*60+34,83],[18*60+8,78],[18*60+26,84],[18*60+31,92],[18*60+33,89]
+  ]
+};
+
+const palette = {
+  "May 6":"#3266ad","May 8":"#1D9E75","May 9":"#7F77DD","May 11":"#D85A30",
+  "May 12":"#BA7517","May 13":"#185FA5","May 15":"#D4537E","May 19":"#639922",
+  "May 20":"#A32D2D","May 21":"#533489","May 25":"#0F6E56"
+};
+const days = Object.keys(rawData);
+let activeDays = new Set(days);
+
+function toTimeLabel(m){const h=Math.floor(m/60),mm=m%60;return(h<10?'0'+h:h)+':'+(mm<10?'0'+mm:mm);}
+
+const flags = [
+  {day:"May 25",time:"10:18",bpm:177,sev:"red",note:"Overall peak. Sustained 120–160+ bpm for ~3.5 hrs (08:26–11:51)."},
+  {day:"May 21",time:"11:46 & 12:10",bpm:165,sev:"red",note:"Two peaks of 165 bpm. HR >130 from ~08:21 through 12:44 (~4.5 hrs)."},
+  {day:"May 20",time:"09:52",bpm:162,sev:"red",note:"Multiple consecutive readings ≥150 from 08:24–10:01 (~90 min sustained)."},
+  {day:"May 6",time:"11:14",bpm:161,sev:"red",note:"Peak 161 bpm. Also 160 at 14:57, 156 at 11:08, 149 at 12:03, 152 at 14:44. Active throughout entire day."},
+  {day:"May 9",time:"18:25",bpm:161,sev:"red",note:"Peak 161 bpm; also 154 twice. Dense burst of 30+ readings at 15:03–15:07 (99–117 bpm) — likely continuous workout recording."},
+  {day:"May 13",time:"18:43",bpm:159,sev:"orange",note:"Five consecutive readings 151–159 bpm in ~20 min window at end of day."},
+  {day:"May 6",time:"18:14–18:23",bpm:"110–141",sev:"orange",note:"Dense cluster of many readings logged within same minute — pattern consistent with continuous exercise monitoring."},
+  {day:"May 11",time:"18:32",bpm:144,sev:"orange",note:"Also 141 at 14:30, 147 at 17:35. Multiple moderate spikes but none sustained."},
+  {day:"May 8",time:"08:23",bpm:144,sev:"orange",note:"Isolated spike to 144 bpm, otherwise a relatively quiet day with moderate HR."},
+  {day:"May 12",time:"12:15",bpm:153,sev:"orange",note:"Multiple ≥130 readings 11:50–12:19. Separate spike 148 at 14:43."},
+  {day:"May 13",time:"09:53",bpm:"67 / 126",sev:"blue",note:"Two simultaneous/near-simultaneous readings — possible artefact or brief irregular rhythm."},
+  {day:"May 11",time:"12:21–12:32",bpm:"61–64",sev:"blue",note:"Cluster of low readings (61, 64 bpm) across a few minutes. Isolated — artefact or genuine low episode."},
+  {day:"May 8",time:"18:56",bpm:67,sev:"blue",note:"Isolated 67 bpm reading amid otherwise normal afternoon values."}
+];
+
+const fl=document.getElementById('flagsList');
+flags.forEach(f=>{
+  const c=f.sev==='red'?'#E24B4A':f.sev==='orange'?'#BA7517':'#185FA5';
+  const row=document.createElement('div');
+  row.style.cssText="display:flex;gap:9px;font-size:12px;align-items:flex-start;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary);";
+  row.innerHTML=`<span style="flex-shrink:0;background:${c};color:#fff;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:500;">${f.day}</span><span style="color:var(--color-text-secondary);flex-shrink:0;min-width:90px;">${f.time} → <strong style="color:var(--color-text-primary);">${f.bpm}</strong></span><span style="color:var(--color-text-secondary);">${f.note}</span>`;
+  fl.appendChild(row);
+});
+
+const mc=document.getElementById('metricCards');
+const all=Object.values(rawData).flat().map(d=>d[1]);
+const mx=Math.max(...all),mn=Math.min(...all),avg=Math.round(all.reduce((a,b)=>a+b,0)/all.length),o150=all.filter(v=>v>=150).length;
+[{l:"Peak",v:mx+" bpm",c:"#E24B4A"},{l:"Lowest",v:mn+" bpm",c:"#185FA5"},{l:"Avg",v:avg+" bpm",c:"var(--color-text-primary)"},{l:"Readings ≥150",v:o150,c:"#A32D2D"},{l:"Days tracked",v:days.length,c:"var(--color-text-secondary)"}].forEach(c=>{
+  const el=document.createElement('div');
+  el.style.cssText="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 12px;flex:1;min-width:90px;";
+  el.innerHTML=`<div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:3px;">${c.l}</div><div style="font-size:19px;font-weight:500;color:${c.c};">${c.v}</div>`;
+  mc.appendChild(el);
+});
+
+const lg=document.getElementById('legend');
+days.forEach(d=>{
+  const btn=document.createElement('button');
+  btn.dataset.day=d;
+  btn.style.cssText="display:flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;cursor:pointer;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);";
+  btn.innerHTML=`<span style="width:9px;height:9px;border-radius:2px;background:${palette[d]};flex-shrink:0;"></span>${d}`;
+  btn.addEventListener('click',()=>{
+    if(activeDays.has(d)){if(activeDays.size>1){activeDays.delete(d);btn.style.opacity='0.35';}}
+    else{activeDays.add(d);btn.style.opacity='1';}
+    updateChart();
+  });
+  lg.appendChild(btn);
+});
+
+const df=document.getElementById('dayFilters');
+[
+  {l:"All",a:()=>{activeDays=new Set(days);document.querySelectorAll('#legend button').forEach(b=>b.style.opacity='1');}},
+  {l:"High-intensity (May 6,9,20,21,25)",a:()=>set(["May 6","May 9","May 20","May 21","May 25"])},
+  {l:"Moderate (May 8,11,12,13,15)",a:()=>set(["May 8","May 11","May 12","May 13","May 15"])},
+  {l:"Quiet (May 19)",a:()=>set(["May 19"])}
+].forEach(f=>{
+  const btn=document.createElement('button');
+  btn.textContent=f.l;
+  btn.style.cssText="font-size:11px;padding:2px 9px;cursor:pointer;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-secondary);";
+  btn.addEventListener('click',()=>{f.a();updateChart();});
+  df.appendChild(btn);
+});
+function set(arr){activeDays=new Set(arr);document.querySelectorAll('#legend button').forEach(b=>{b.style.opacity=activeDays.has(b.dataset.day)?'1':'0.35';});}
+
+let chart;
+function buildDS(){
+  return days.filter(d=>activeDays.has(d)).map(day=>({
+    label:day,data:rawData[day].map(([m,b])=>({x:m,y:b})),
+    borderColor:palette[day],backgroundColor:palette[day]+'20',
+    fill:false,tension:0.3,pointRadius:2.5,pointHoverRadius:5,borderWidth:1.8
+  }));
+}
+function updateChart(){chart.data.datasets=buildDS();chart.update();}
+
+const ctx=document.getElementById('hrChart').getContext('2d');
+chart=new Chart(ctx,{
+  type:'line',
+  data:{datasets:buildDS()},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{title(i){return toTimeLabel(i[0].parsed.x);},label(i){return i.dataset.label+': '+Math.round(i.parsed.y)+' bpm';}}}
+    },
+    scales:{
+      x:{type:'linear',min:7*60,max:21*60,ticks:{stepSize:60,callback(v){return toTimeLabel(v);}},grid:{color:'rgba(128,128,128,0.1)'},title:{display:true,text:'Time of day',font:{size:11},color:'#888'}},
+      y:{min:55,max:185,ticks:{callback(v){return v+' bpm';}},grid:{color:'rgba(128,128,128,0.1)'},title:{display:true,text:'Heart rate (bpm)',font:{size:11},color:'#888'}}
+    }
+  },
+  plugins:[{id:'zones',beforeDraw(c){
+    const{ctx,chartArea:{left,right,top,bottom},scales:{y}}=c;
+    ctx.save();
+    const y100=y.getPixelForValue(100),y150=y.getPixelForValue(150);
+    ctx.fillStyle='rgba(186,117,23,0.05)';ctx.fillRect(left,y100,right-left,bottom-y100);
+    ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(186,117,23,0.45)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(left,y100);ctx.lineTo(right,y100);ctx.stroke();
+    ctx.fillStyle='rgba(162,45,45,0.05)';ctx.fillRect(left,top,right-left,y150-top);
+    ctx.setLineDash([]);ctx.strokeStyle='rgba(162,45,45,0.55)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(left,y150);ctx.lineTo(right,y150);ctx.stroke();
+    ctx.restore();
+  }}]
+});
+</script>
